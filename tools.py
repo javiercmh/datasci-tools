@@ -8,7 +8,7 @@ pd.options.display.max_rows = 50
 
 # copy the following in any new notebook: %matplotlib inline
 
-def corr_matrix(data, significance=False, decimals=3):
+def corr(data, significance=False, decimals=3):
     '''Generates a correlation matrix with p values and sample size, just like SPSS. 
 	
     Args:
@@ -17,7 +17,7 @@ def corr_matrix(data, significance=False, decimals=3):
         decimals (int): Used to round values.
 	
 	Returns:
-		corr_matrix (pandas.DataFrame): SPSS-like correlation matrix.
+		pandas.DataFrame: SPSS-like correlation matrix.
     '''
 	# (adapted from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance)
     # generate matrices (r, p vals, sample size)
