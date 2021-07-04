@@ -8,6 +8,41 @@ pd.options.display.max_rows = 50
 
 # copy the following in any new notebook: %matplotlib inline
 
+def corr_matrix(data, significance=False, decimals=3):
+    '''Generates a correlation matrix with p values and sample size, just like SPSS. 
+	
+    Args:
+        data (pandas.DataFrame): Data for calculating correlations.
+        significance (bool): Determines whether to include asterisks in correlations.
+        decimals (int): Used to round values.
+	
+	Returns:
+		corr_matrix (pandas.DataFrame): SPSS-like correlation matrix.
+    '''
+	# (adapted from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance)
+    # generate matrices (r, p vals, sample size)
+    rs = data.corr(method=lambda x, y: pearsonr(x,y)[0]).round(decimals)
+    pvals = data.corr(method=lambda x, y: pearsonr(x,y)[1]).round(decimals)
+    ns = data.corr(method=lambda x, y: len(x)).replace(1, np.nan).round(decimals)  # sample size = 1 would be misleading
+
+    if(significance):
+        p = pvals.applymap(lambda x: ''.join(['*' for t in [0.001, 0.01, 0.05] if x <= t]))  # matrix with asterisks
+        rs = rs.astype(str) + p
+    
+	# (adapted from https://stackoverflow.com/questions/58282538/merging-pandas-dataframes-alternating-rows-without-soritng-rows)
+    # create new index level enumerating the number of columns
+    s1 = rs.assign(_col = np.arange(len(rs))).set_index('_col', append=True)
+    s2 = pvals.assign(_col = np.arange(len(pvals))).set_index('_col', append=True)
+    s3 = ns.assign(_col = np.arange(len(ns))).set_index('_col', append=True)
+
+    # merge these matrices
+    corr_matrix = (pd.concat([s1, s2, s3], keys=('Pearson\'s r','p value', 'Sample size'))  # new index with each indicator
+                    .sort_index(kind='merge', level=2)  # sort index, so names in previous line are important
+                    .reset_index(level=2, drop=True)  # drop _col index
+                    .swaplevel(0,1))  # invert index levels
+    
+    return corr_matrix
+
 def pie(values, labels=None, title='', slices=None, percent_only=False, explode=True, color='white'):
     '''Display a pie plot.
 	
@@ -49,38 +84,3 @@ def pie(values, labels=None, title='', slices=None, percent_only=False, explode=
     ax.set_title(title, fontweight='bold')
     plt.show()
 
-
-def corr_matrix(data, significance=False, decimals=3):
-    '''Generates a correlation matrix with p values and sample size, just like SPSS. 
-	
-    Args:
-        data (pandas.DataFrame): Data for calculating correlations.
-        significance (bool): Determines whether to include asterisks in correlations.
-        decimals (int): Used to round values.
-	
-	Returns:
-		corr_matrix (pandas.DataFrame): SPSS-like correlation matrix.
-    '''
-	# (adapted from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance)
-    # generate matrices (r, p vals, sample size)
-    rs = data.corr(method=lambda x, y: pearsonr(x,y)[0]).round(decimals)
-    pvals = data.corr(method=lambda x, y: pearsonr(x,y)[1]).round(decimals)
-    ns = data.corr(method=lambda x, y: len(x)).replace(1, np.nan).round(decimals)  # sample size = 1 would be misleading
-
-    if(significance):
-        p = pvals.applymap(lambda x: ''.join(['*' for t in [0.001, 0.01, 0.05] if x <= t]))  # matrix with asterisks
-        rs = rs.astype(str) + p
-    
-	# (adapted from https://stackoverflow.com/questions/58282538/merging-pandas-dataframes-alternating-rows-without-soritng-rows)
-    # create new index level enumerating the number of columns
-    s1 = rs.assign(_col = np.arange(len(rs))).set_index('_col', append=True)
-    s2 = pvals.assign(_col = np.arange(len(pvals))).set_index('_col', append=True)
-    s3 = ns.assign(_col = np.arange(len(ns))).set_index('_col', append=True)
-
-    # merge these matrices
-    corr_matrix = (pd.concat([s1, s2, s3], keys=('Pearson\'s r','p value', 'Sample size'))  # new index with each indicator
-                    .sort_index(kind='merge', level=2)  # sort index, so names in previous line are important
-                    .reset_index(level=2, drop=True)  # drop _col index
-                    .swaplevel(0,1))  # invert index levels
-    
-    return corr_matrix
