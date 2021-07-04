@@ -3,7 +3,7 @@ Functions I use for data analysis which are too painful to do by hand. Check the
 
 ## Functions so far
 
-### corr_matrix(data, significance=False, decimals=3)
+### corr(data, significance=False, decimals=3)
 
 Generates a correlation matrix with p values and sample size, just like SPSS. It takes the following parameters:
 
@@ -11,9 +11,11 @@ Generates a correlation matrix with p values and sample size, just like SPSS. It
 - significance: bool that determines whether to include asterisks to correlations.
 - decimals: int used to round values.
 
+Returns a pandas.DataFrame with a correlation matrix.
+
 ### pie(values, labels=None, title='', slices=None, percent_only=False, explode=True, color='white')
 
-Useful pie plot with matplotlib. It has the following parameters:
+Useful pie plot with matplotlib. It takes the following parameters:
 
 - values: `list` or `pandas.Series()` of unique values. Using `value_counts()` is highly recommended.
 - labels: if `None`, indices of `values` will be used.
