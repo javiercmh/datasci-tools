@@ -5,7 +5,7 @@ Functions I use for data analysis which are too painful to do by hand. Check the
 
 ### corr_matrix(data, significance=False, decimals=3)
 
-Generates a correlation matrix with p values, just like SPSS. It takes the following parameters:
+Generates a correlation matrix with p values and sample size, just like SPSS. It takes the following parameters:
 
 - data: pandas.DataFrame to calculate correlations
 - significance: bool that determines whether to include asterisks to correlations.
