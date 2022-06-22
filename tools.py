@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, normaltest, shapiro
 
 
@@ -23,35 +23,34 @@ def corr(data, significance=False, decimals=3, sample_size=True):
 
     if significance:
         p = pvals.applymap(
-            lambda x: "".join(["*" for t in [0.001, 0.01, 0.05]
-                               if x <= t]))  # matrix with asterisks
+            lambda x: "".join(["*" for t in [0.001, 0.01, 0.05] if x <= t])
+        )  # matrix with asterisks
         rs = rs.astype(str) + p
 
     # (adapted from https://stackoverflow.com/questions/58282538/merging-pandas-dataframes-alternating-rows-without-soritng-rows)
     # create new index level enumerating the number of columns
     s1 = rs.assign(_col=np.arange(len(rs))).set_index("_col", append=True)
-    s2 = pvals.assign(_col=np.arange(len(pvals))).set_index("_col",
-                                                            append=True)
+    s2 = pvals.assign(_col=np.arange(len(pvals))).set_index("_col", append=True)
 
     levels = [s1, s2]
     column_names = ("Pearson's r", "p-value")
 
     if sample_size:
-        ns = (data.corr(method=lambda x, y: len(x)).replace(
-            1, np.nan).round(decimals))  # sample size = 1 would be misleading
+        ns = (
+            data.corr(method=lambda x, y: len(x)).replace(1, np.nan).round(decimals)
+        )  # sample size = 1 would be misleading
         s3 = ns.assign(_col=np.arange(len(ns))).set_index("_col", append=True)
 
         levels.append(s3)
-        column_names += ("Sample size", )
+        column_names += ("Sample size",)
 
     # merge these matrices
     corr_matrix = (
         pd.concat(levels, keys=column_names)  # new index with each indicator
-        .sort_index(
-            kind="merge",
-            level=2)  # sort index, so names in previous line are important
+        .sort_index(kind="merge", level=2)
         .reset_index(level=2, drop=True)  # drop _col index
-        .swaplevel(0, 1))  # invert index levels
+        .swaplevel(0, 1)
+    )  # invert index levels
 
     return corr_matrix
 
@@ -82,8 +81,7 @@ def pie(
     if slices:  # debug
         other = values[slices:]
         values = values[:slices]
-        values.index = values.index.astype(
-            str)  # avoid problems with CategoricalIndex
+        values.index = values.index.astype(str)  # avoid problems with CategoricalIndex
         values["Other"] = other.sum()
 
     if not labels:
@@ -97,8 +95,11 @@ def pie(
         else:
             return "{:.0f}%".format(x, total * x / 100)
 
-    explode = ([0.1] + [0 for l in range(len(labels) - 1)]
-               if explode else [0 for l in range(len(labels))])
+    explode = (
+        [0.1] + [0 for l in range(len(labels) - 1)]
+        if explode
+        else [0 for l in range(len(labels))]
+    )
     total = sum(values)
 
     fig, ax = plt.subplots()
@@ -117,7 +118,8 @@ def pie(
 
 def is_normal(feature):
     """Check if a feature is normally distributed. Implementation uses two statistical
-    tests for normality and selects the worst of the two.
+    tests for normality and selects the worst of the two. In both tests, 
+    the null hypothesis is that the data was drawn from a normal distribution.
 
     Args:
         feature (pandas.Series): feature to check.
@@ -126,21 +128,22 @@ def is_normal(feature):
         bool: True if the feature is normally distributed, False otherwise.
     """
 
-    sample = (feature if len(feature) < 4000 else feature.sample(n=4000)
-              )  # warning said that N>5000 make p values less reliable
+    sample = (
+        feature if len(feature) < 4000 else feature.sample(n=4000)
+    )  # warning said that N>5000 make p values less reliable
 
     alpha = 5e-2
     _, p_normaltest = normaltest(sample)  # see D’Agostino & Pearson, 1973
     _, p_shapiro = shapiro(sample)  # see Shapiro & Wilk, 1965
 
-    if (p_normaltest < alpha and p_shapiro <
-            alpha):  # null hypothesis: x comes from a normal distribution
+    if (
+        p_normaltest < alpha or p_shapiro < alpha
+    ):  
+        print(f"'{sample.name}' is not normally distributed.")
+        print("Average p:", (p_normaltest + p_shapiro) / 2)
+        return False
+    else:
         print(f"'{sample.name}' is normally distributed (p={alpha}).")
         feature.skew()
         feature.kurtosis()
         return True
-    else:
-        print(f"'{sample.name}' is not normally distributed.")
-        print("Average p:", (p_normaltest + p_shapiro) / 2)
-
-    return False
